@@ -11,23 +11,36 @@ use thiserror::Error;
 /// Currently supported models are:
 /// - Gpt3_5Turbo
 /// - Gpt4
-#[derive(Debug, PartialEq, Eq, Clone, Serialize, Deserialize)]
-#[serde(rename_all = "kebab-case")]
+#[derive(Debug, PartialEq, Eq, Clone)]
 #[allow(non_camel_case_types)] // Add this line to suppress the warning
 pub enum Model {
-    #[serde(rename = "gpt-3.5-turbo")]
     Gpt3_5Turbo,
-    #[serde(rename = "gpt-4")]
     Gpt_4,
-    #[serde(rename = "gpt-4-32k")]
     Gpt_4_32k,
-    #[serde(rename = "gpt-4-1106-preview")]
     Gpt_4Turbo,
-    #[serde(rename = "gpt-4o")]
     Gpt_4o,
-    #[serde(rename = "gpt-4-vision-preview")]
     Gpt_4Turbo_Vision,
     Custom(String),
+}
+
+// Add custom Serialize implementation
+impl Serialize for Model {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        serializer.serialize_str(&self.to_string())
+    }
+}
+
+impl<'de> Deserialize<'de> for Model {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let s = String::deserialize(deserializer)?;
+        Model::from_str(&s).map_err(serde::de::Error::custom)
+    }
 }
 
 impl Model {
@@ -118,7 +131,7 @@ mod tests {
     #[test]
     fn test_from_str_gpt3_5turbo() {
         let input = "gpt-3.5-turbo";
-        let model: Result<Model, ()> = Model::from_str(input);
+        let model: Result<Model, _> = Model::from_str(input);
         assert!(
             model.is_ok(),
             "Failed to parse the gpt-3.5-turbo model name"
@@ -130,17 +143,18 @@ mod tests {
     #[test]
     fn test_from_str_gpt4() {
         let input = "gpt-4";
-        let model: Result<Model, ()> = Model::from_str(input);
+        let model: Result<Model, _> = Model::from_str(input);
         assert!(model.is_ok(), "Failed to parse the gpt-4 model name");
         assert_eq!(model.unwrap(), Model::Gpt_4);
     }
 
     // Test the conversion of an invalid model string to a `Model` enum variant.
     #[test]
-    fn test_from_str_invalid() {
-        let input = "invalid-model";
-        let model: Result<Model, ()> = Model::from_str(input);
-        assert!(model.is_err(), "Parsed an invalid model name");
+    fn test_from_str_custom() {
+        let input = "llama3.2:1b";
+        let model: Result<Model, _> = Model::from_str(input);
+        assert!(model.is_ok(), "Failed to parse custom model");
+        assert_eq!(model.unwrap(), Model::Custom(String::from("llama3.2:1b")));
     }
 
     // Test the conversion of a `Model` enum variant to its string representation for Gpt3_5Turbo.
@@ -187,7 +201,7 @@ mod tests {
     #[test]
     fn test_from_str_gpt4_32k() {
         let input = "gpt-4-32k";
-        let model: Result<Model, ()> = Model::from_str(input);
+        let model: Result<Model, _> = Model::from_str(input);
         assert!(model.is_ok(), "Failed to parse the gpt-4-32k model name");
         assert_eq!(model.unwrap(), Model::Gpt_4_32k);
     }
@@ -278,7 +292,7 @@ mod tests {
     #[test]
     fn test_from_str_gpt_4turbo() {
         let input = "gpt-4-1106-preview";
-        let model: Result<Model, ()> = Model::from_str(input);
+        let model: Result<Model, _> = Model::from_str(input);
         assert!(
             model.is_ok(),
             "Failed to parse the gpt-4-1106-preview model name"
@@ -314,7 +328,7 @@ mod tests {
     #[test]
     fn test_from_str_gpt_4turbo_vision() {
         let input = "gpt-4-vision-preview";
-        let model: Result<Model, ()> = Model::from_str(input);
+        let model: Result<Model, _> = Model::from_str(input);
         assert!(
             model.is_ok(),
             "Failed to parse the gpt-4-vision-preview model name"
@@ -364,7 +378,7 @@ mod tests {
     #[test]
     fn test_from_str_gpt_4o() {
         let input = "gpt-4o";
-        let model: Result<Model, ()> = Model::from_str(input);
+        let model: Result<Model, _> = Model::from_str(input);
         assert!(model.is_ok(), "Failed to parse the gpt-4o model name");
         assert_eq!(model.unwrap(), Model::Gpt_4o);
     }
