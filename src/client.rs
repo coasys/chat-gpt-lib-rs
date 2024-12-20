@@ -158,7 +158,8 @@ impl ChatGPTClient {
     ///
     /// Returns a ChatGPTError if the request fails.
     pub async fn chat(&self, input: ChatInput) -> Result<ChatResponse, ChatGPTError> {
-        let url = format!("{}/v1/chat/completions", self.base_url);
+        let base_url = self.base_url.trim_end_matches('/').to_string();
+        let url = format!("{}/v1/chat/completions", base_url);
         let response = self
             .client
             .post(&url)
