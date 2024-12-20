@@ -11,7 +11,7 @@ use thiserror::Error;
 /// Currently supported models are:
 /// - Gpt3_5Turbo
 /// - Gpt4
-#[derive(Debug, PartialEq, Eq, Clone, Copy, Serialize, Deserialize)]
+#[derive(Debug, PartialEq, Eq, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
 #[allow(non_camel_case_types)] // Add this line to suppress the warning
 pub enum Model {
@@ -27,6 +27,7 @@ pub enum Model {
     Gpt_4o,
     #[serde(rename = "gpt-4-vision-preview")]
     Gpt_4Turbo_Vision,
+    Custom(String),
 }
 
 impl Model {
@@ -38,6 +39,7 @@ impl Model {
             Model::Gpt_4o => 128000,
             Model::Gpt_4Turbo => 128000,
             Model::Gpt_4Turbo_Vision => 128000,
+            Model::Custom(_) => 128000,
         }
     }
 }
@@ -52,6 +54,7 @@ impl Display for Model {
             Model::Gpt_4o => "gpt-4o",
             Model::Gpt_4Turbo => "gpt-4-1106-preview",
             Model::Gpt_4Turbo_Vision => "gpt-4-vision-preview",
+            Model::Custom(c) => c,
         };
         write!(f, "{model_name}")
     }
@@ -69,7 +72,7 @@ impl FromStr for Model {
             "gpt-4o" => Ok(Model::Gpt_4o),
             "gpt-4-1106-preview" => Ok(Model::Gpt_4Turbo),
             "gpt-4-vision-preview" => Ok(Model::Gpt_4Turbo_Vision),
-            _ => Err(ModelError::UnsupportedModel(s.into())),
+            c => Ok(Model::Custom(c.to_string())),
         }
     }
 }
